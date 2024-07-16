@@ -13,6 +13,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { APP_GUARD } from '@nestjs/core';
 import { LoginGuard } from './login.guard';
 import { PermissionGuard } from './permission.guard';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -22,16 +23,16 @@ import { PermissionGuard } from './permission.guard';
         return {
           secret: configService.get('jwt_secret'),
           signOptions: {
-            expiresIn: '30m' // 默认 30 分钟
-          }
-        }
+            expiresIn: '30m', // 默认 30 分钟
+          },
+        };
       },
-      inject: [ConfigService]
+      inject: [ConfigService],
     }),
     TypeOrmModule.forRootAsync({
       useFactory(configService: ConfigService) {
         return {
-          type: "mysql",
+          type: 'mysql',
           host: configService.get('mysql_server_host'),
           port: configService.get('mysql_server_port'),
           username: configService.get('mysql_server_username'),
@@ -39,35 +40,36 @@ import { PermissionGuard } from './permission.guard';
           database: configService.get('mysql_server_database'),
           synchronize: true,
           logging: true,
-          entities: [
-            User, Role, Permission
-          ],
+          entities: [User, Role, Permission],
           poolSize: 10,
           connectorPackage: 'mysql2',
           extra: {
             authPlugin: 'sha256_password',
-          }
-        }
+          },
+        };
       },
-      inject: [ConfigService]
+      inject: [ConfigService],
     }),
     UserModule,
     RedisModule,
     EmailModule,
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: 'src/.env'
-    })
+      // envFilePath: 'src/.env'
+      envFilePath: join(__dirname, '.env'),
+    }),
   ],
   controllers: [AppController],
-  providers: [AppService,
+  providers: [
+    AppService,
     {
       provide: APP_GUARD,
-      useClass: LoginGuard
-    }, {
+      useClass: LoginGuard,
+    },
+    {
       provide: APP_GUARD,
-      useClass: PermissionGuard
-    }
+      useClass: PermissionGuard,
+    },
   ],
 })
-export class AppModule { }
+export class AppModule {}
